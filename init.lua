@@ -97,7 +97,7 @@ require("lazy").setup({
   },
 
   -- Motion
-  { "ggandor/leap.nvim", config = function() require("leap").add_default_mappings() end },
+  { "ggandor/leap.nvim" },
 
   -- flake8 linting
   {
@@ -145,6 +145,9 @@ require("lazy").setup({
   },
 })
 
+vim.keymap.set({ 'n', 'x', 'o' }, '<leader>s', '<Plug>(leap-forward)')
+vim.keymap.set({ 'n', 'x', 'o' }, '<leader>S', '<Plug>(leap-backward)')
+vim.keymap.set({ 'n', 'x', 'o' }, '<leader>gs', '<Plug>(leap-from-window)')
 vim.notify = require("notify")
 
 -- Color scheme
