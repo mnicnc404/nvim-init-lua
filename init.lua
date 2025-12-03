@@ -58,7 +58,12 @@ require("lazy").setup({
       { "nvim-lua/plenary.nvim", branch = "master" },
     },
     build = "make tiktoken",
-    opts = {}
+    opts = {
+      context = {
+        include_buffer = true,
+        include_filetypes = { "python", "lua", "go", "javascript", "typescript" },
+      },
+    }
   },
   { "ellisonleao/gruvbox.nvim", priority = 1000, config = true, opts = { background = "dark" } },
   { "lervag/vimtex" },
@@ -70,20 +75,15 @@ require("lazy").setup({
   },
   { "ggandor/leap.nvim" },
   {
-    "mfussenegger/nvim-lint",
-    config = function()
-      local lint = require("lint")
-      lint.linters_by_ft = { python = { "flake8" } }
-      vim.api.nvim_create_autocmd({ "BufWritePost", "BufReadPost" }, {
-        callback = function() lint.try_lint() end,
-      })
-    end
-  },
-  {
     "stevearc/conform.nvim",
     opts = {
+      formatters = {
+        ruff_fix = {
+          prepend_args = { "check", "--extend-select", "I" },
+        },
+      },
       formatters_by_ft = {
-        python = { "isort" },
+        python = { "ruff_fix", "ruff_format" },
       },
       format_on_save = {
         timeout_ms = 500,
@@ -102,6 +102,8 @@ vim.keymap.set("n", "<leader>fg", "<cmd>Telescope live_grep<CR>", { desc = "Live
 vim.keymap.set("n", "<leader>fb", "<cmd>Telescope buffers<CR>", { desc = "Buffers" })
 vim.keymap.set("n", "<leader>fh", "<cmd>Telescope help_tags<CR>", { desc = "Help" })
 vim.keymap.set("n", "<leader>z", "za", { desc = "Toggle fold" })
+vim.keymap.set("n", "<leader>fn", "<cmd>Telescope notify<CR>", { desc = "Notification History" })
+
 vim.keymap.set("n", "<leader>dj", function()
   local diags = vim.diagnostic.get(0)
   if #diags > 0 then
@@ -153,33 +155,34 @@ require("lualine").setup({
 })
 
 require("mason").setup()
+
 require("mason-lspconfig").setup({
-  ensure_installed = { "lua_ls", "pyright" },
-  automatic_installation = true,
+  ensure_installed = { "lua_ls", "ruff" },
+  automatic_enable = { exclude = { "lua_ls" } },
 })
 
-local lspconfig = require("lspconfig")
-require("mason-lspconfig").setup_handlers({
-  function(server_name)
-    if server_name == "lua_ls" then
-      lspconfig.lua_ls.setup({
-        settings = {
-          Lua = {
-            runtime = { version = "LuaJIT" },
-            diagnostics = { globals = { "vim" } },
-            workspace = {
-              library = vim.api.nvim_get_runtime_file("", true),
-              checkThirdParty = false,
-            },
-            telemetry = { enable = false },
-          },
-        },
-      })
-    else
-      lspconfig[server_name].setup({})
-    end
-  end,
-})
+local lua_settings = {
+  settings = {
+    Lua = {
+      runtime = { version = "LuaJIT" },
+      diagnostics = { globals = { "vim" } },
+      workspace = {
+        library = vim.api.nvim_get_runtime_file("", true),
+        checkThirdParty = false,
+      },
+      telemetry = { enable = false },
+    },
+  },
+}
+
+if vim.fn.has("nvim-0.11") == 1 then
+  vim.lsp.config("lua_ls", lua_settings)
+  vim.lsp.enable("lua_ls")
+else
+  pcall(function()
+    require("lspconfig").lua_ls.setup(lua_settings)
+  end)
+end
 
 vim.diagnostic.config({
   virtual_text = false,
@@ -194,62 +197,8 @@ vim.diagnostic.config({
   },
 })
 
-vim.api.nvim_set_hl(0, "Flake8Error", { fg = "#ff6c6b", bg = "NONE" })
-vim.api.nvim_set_hl(0, "Flake8Warn", { fg = "#ECBE7B", bg = "NONE" })
-vim.api.nvim_set_hl(0, "Flake8Hint", { fg = "#ffffff", bg = "NONE" })
-
 vim.api.nvim_create_autocmd("CursorHold", {
   callback = function()
     vim.diagnostic.open_float(nil, { focusable = false })
-  end
-})
-
-vim.api.nvim_create_autocmd("CursorMoved", {
-  callback = function()
-    local function echo_clean_message(message, code_str, hl)
-      local win_width = vim.api.nvim_win_get_width(0)
-      local full_msg = (message or ""):gsub("\n", ";") .. code_str
-      if #full_msg > win_width - 1 then
-        full_msg = full_msg:sub(1, win_width - 15) .. "..."
-      end
-      vim.api.nvim_echo({ { full_msg, hl } }, false, {})
-    end
-
-    local line = vim.fn.line(".") - 1
-    local diagnostics = vim.diagnostic.get(0, { lnum = line })
-    local fallback = nil
-
-    for _, d in ipairs(diagnostics) do
-      if d.source == "flake8" then
-        local code = d.code or ""
-        local hl = "Normal"
-        if code:match("^F") or code:match("^E") then
-          hl = "Flake8Error"
-        elseif code:match("^[WBCNS]") then
-          hl = "Flake8Warn"
-        elseif code:match("^[DQA]") then
-          hl = "Flake8Hint"
-        end
-        local code_str = code ~= "" and (" [" .. code .. "]") or ""
-        echo_clean_message(d.message, code_str, hl)
-        return
-      elseif not fallback then
-        fallback = d
-      end
-    end
-
-    if fallback then
-      local hl = ({
-        [vim.diagnostic.severity.ERROR] = "Flake8Error",
-        [vim.diagnostic.severity.WARN]  = "Flake8Warn",
-        [vim.diagnostic.severity.INFO]  = "Flake8Hint",
-        [vim.diagnostic.severity.HINT]  = "Flake8Hint",
-      })[fallback.severity] or "Normal"
-
-      local code_str = fallback.code and (" [" .. fallback.code .. "]") or ""
-      echo_clean_message(fallback.message, code_str, hl)
-    else
-      vim.api.nvim_echo({}, false, {})
-    end
   end
 })
