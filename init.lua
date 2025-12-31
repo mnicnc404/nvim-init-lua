@@ -52,18 +52,49 @@ require("lazy").setup({
   { "williamboman/mason.nvim",          build = ":MasonUpdate",                           config = true },
   { "williamboman/mason-lspconfig.nvim" },
   {
-    "CopilotC-Nvim/CopilotChat.nvim",
-    dependencies = {
-      { "github/copilot.vim" },
-      { "nvim-lua/plenary.nvim", branch = "master" },
-    },
-    build = "make tiktoken",
+    "yetone/avante.nvim",
+    event = "VeryLazy",
+    lazy = false,
+    version = false,
     opts = {
-      context = {
-        include_buffer = true,
-        include_filetypes = { "python", "lua", "go", "javascript", "typescript" },
+      provider = "gemini",
+      providers = {
+        gemini = {
+          model = "gemini-3-flash-preview",
+          temperature = 0,
+          max_tokens = 8192,
+        },
       },
-    }
+    },
+    build = "make",
+    dependencies = {
+      "stevearc/dressing.nvim",
+      "nvim-lua/plenary.nvim",
+      "MunifTanjim/nui.nvim",
+      "nvim-tree/nvim-web-devicons",
+      {
+        "MeanderingProgrammer/render-markdown.nvim",
+        opts = { file_types = { "markdown", "Avante" } },
+        ft = { "markdown", "Avante" },
+      },
+    },
+  },
+  {
+    "supermaven-inc/supermaven-nvim",
+    config = function()
+      require("supermaven-nvim").setup({
+        keymaps = {
+          accept_suggestion = "<Tab>",
+          clear_suggestion = "<C-]>",
+          accept_word = "<C-j>",
+        },
+        ignore_filetypes = {},
+        color = {
+          suggestion_color = "#888888",
+          cterm = 244,
+        }
+      })
+    end,
   },
   { "ellisonleao/gruvbox.nvim", priority = 1000, config = true, opts = { background = "dark" } },
   { "lervag/vimtex" },
