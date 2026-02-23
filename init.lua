@@ -24,6 +24,7 @@ if not vim.loop.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
+
 require("lazy").setup({
   { "nvim-treesitter/nvim-treesitter", build = ":TSUpdate" },
   { "nvim-lualine/lualine.nvim",       opts = {} },
@@ -57,18 +58,27 @@ require("lazy").setup({
         and "powershell -ExecutionPolicy Bypass -File Build.ps1 -BuildFromSource false"
         or "make",
     event = "VeryLazy",
-    version = false, -- Never set this value to "*"! Never!
+    version = false,
     ---@module 'avante'
     ---@type avante.Config
     opts = {
-      instructions_file = "avante.md",
       provider = "gemini-cli",
       acp_providers = {
         ["gemini-cli"] = {
           command = "gemini",
-          args = { "--experimental-acp" },
+          args = {
+            "--experimental-acp",
+            "--model",
+            "gemini-3-pro-preview",
+          },
+          auth_method = "oauth-personal",
           env = {
-            GEMINI_API_KEY = os.getenv("GEMINI_API_KEY"),
+            NODE_NO_WARNINGS = "1",
+            HOME = os.getenv("HOME"),
+            PATH = os.getenv("PATH"),
+            XDG_CONFIG_HOME = os.getenv("XDG_CONFIG_HOME"),
+            XDG_DATA_HOME = os.getenv("XDG_DATA_HOME"),
+            XDG_STATE_HOME = os.getenv("XDG_STATE_HOME"),
           },
         },
       },
@@ -76,14 +86,12 @@ require("lazy").setup({
     dependencies = {
       "nvim-lua/plenary.nvim",
       "MunifTanjim/nui.nvim",
-      "nvim-mini/mini.pick",           -- for file_selector provider mini.pick
-      "nvim-telescope/telescope.nvim", -- for file_selector provider telescope
-      "hrsh7th/nvim-cmp",              -- autocompletion for avante commands and mentions
-      "ibhagwan/fzf-lua",              -- for file_selector provider fzf
-      "stevearc/dressing.nvim",        -- for input provider dressing
-      "folke/snacks.nvim",             -- for input provider snacks
-      "nvim-tree/nvim-web-devicons",   -- or echasnovski/mini.icons
-      "zbirenbaum/copilot.lua",        -- for providers='copilot'
+      "echasnovski/mini.pick",
+      "nvim-telescope/telescope.nvim",
+      "hrsh7th/nvim-cmp",
+      "ibhagwan/fzf-lua",
+      "nvim-tree/nvim-web-devicons",
+      "zbirenbaum/copilot.lua",
       {
         "HakonHarnes/img-clip.nvim",
         event = "VeryLazy",
