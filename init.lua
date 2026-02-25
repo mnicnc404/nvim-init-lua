@@ -12,7 +12,7 @@ vim.opt.cursorline = true
 vim.opt.foldmethod = "indent"
 vim.opt.foldlevel = 99
 vim.opt.hlsearch = true
-vim.opt.updatetime = 500
+vim.opt.updatetime = 250
 
 vim.cmd("autocmd FileType yaml setlocal shiftwidth=2 softtabstop=2 expandtab")
 
@@ -26,8 +26,17 @@ vim.opt.rtp:prepend(lazypath)
 
 
 require("lazy").setup({
-  { "nvim-treesitter/nvim-treesitter", build = ":TSUpdate" },
-  { "nvim-lualine/lualine.nvim",       opts = {} },
+  {
+    "nvim-treesitter/nvim-treesitter",
+    build = ":TSUpdate",
+    config = function()
+      require("nvim-treesitter.configs").setup({
+        highlight = { enable = true },
+        indent = { enable = true },
+      })
+    end
+  },
+  { "nvim-lualine/lualine.nvim",     opts = {} },
   {
     "rcarriga/nvim-notify",
     config = function()
@@ -39,7 +48,7 @@ require("lazy").setup({
       })
     end
   },
-  { "nvim-telescope/telescope.nvim",    dependencies = { "nvim-lua/plenary.nvim" } },
+  { "nvim-telescope/telescope.nvim", dependencies = { "nvim-lua/plenary.nvim" } },
   {
     "nvim-telescope/telescope-fzf-native.nvim",
     build = "make",
@@ -169,6 +178,12 @@ require("lazy").setup({
     },
   },
 })
+
+-- Window navigation
+vim.keymap.set("n", "<C-h>", "<C-w>h", { desc = "Move to left window" })
+vim.keymap.set("n", "<C-j>", "<C-w>j", { desc = "Move to lower window" })
+vim.keymap.set("n", "<C-k>", "<C-w>k", { desc = "Move to upper window" })
+vim.keymap.set("n", "<C-l>", "<C-w>l", { desc = "Move to right window" })
 
 vim.keymap.set("n", "<C-n>", ":NvimTreeToggle<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<leader>ff", "<cmd>Telescope find_files<CR>", { desc = "Find files" })
