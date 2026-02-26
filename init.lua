@@ -78,7 +78,7 @@ require("lazy").setup({
           args = {
             "--experimental-acp",
             "--model",
-            "gemini-3-pro-preview",
+            "gemini-3.1-pro-preview",
           },
           auth_method = "oauth-personal",
           env = {
