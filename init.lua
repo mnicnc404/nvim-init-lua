@@ -322,7 +322,7 @@ local function first_diagnostic_location()
 end
 
 local codecompanion_frames = {
-  "⠋⠀", "⠉⠁", "⠈⠉", "⠀⠙", "⠀⠸", "⠀⠴", "⠠⣀", "⣀⠄", "⠦⠀", "⠇⠀"
+  "⠋⠀", "⠉⠁", "⠈⠉", "⠀⠙", "⠀⠸", "⠀⠴", "⠠⠤", "⠤⠄", "⠦⠀", "⠇⠀"
 }
 local codecompanion_state = {}
 local CodeCompanionStatus = require("lualine.component"):extend()
